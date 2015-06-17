@@ -688,21 +688,24 @@ var Select = React.createClass({
 		}.bind(this);
 
 		var groupedOps = function() {
-			var optGroups = this.state.filteredOptions.map(function(op) {
-				return op.optGroup;
-			}).filter(function(groupName) {
-				return this.indexOf(groupName) !== -1;
+
+			var opGroupNames = [];
+
+			this.state.filteredOptions.forEach(function (op) {
+				if (opGroupNames.indexOf(op.optGroup === -1)) {
+					opGroupNames.push(op.optGroup);
+				}
 			});
 
-			return optGroups.map(function(groupName) {
+			return opGroupNames.map(function(groupName, i) {
 				var options = this.state.filteredOptions.filter(function(op) {
 					return op.optGroup === groupName;
 				});
 
 				return (
-					<div key={groupName}>
-						<div>{groupName}</div>
-						{buildOps(this.state.filteredOptions)}
+					<div key={groupName + '_' + i}>
+						<div className="Select-option-group-label">{groupName}</div>
+						{buildOps(options)}
 					</div>
 				);
 			}, this);
