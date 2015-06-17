@@ -706,7 +706,7 @@ var Select = React.createClass({
 			var opGroupNames = [];
 
 			this.state.filteredOptions.forEach(function (op) {
-				if (opGroupNames.indexOf(op.optGroup === -1)) {
+				if (opGroupNames.indexOf(op.optGroup) === -1) {
 					opGroupNames.push(op.optGroup);
 				}
 			});
@@ -718,7 +718,7 @@ var Select = React.createClass({
 
 				return React.createElement(
 					'div',
-					{ key: groupName + '_' + i },
+					{ key: groupName },
 					React.createElement(
 						'div',
 						{ className: 'Select-option-group-label' },
