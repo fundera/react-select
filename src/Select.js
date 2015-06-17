@@ -18,6 +18,7 @@ var Select = React.createClass({
 		multi: React.PropTypes.bool,               // multi-value input
 		disabled: React.PropTypes.bool,            // whether the Select is disabled or not
 		options: React.PropTypes.array,            // array of options
+		groupable: React.PropTypes.bool,            // wether to allow optgroups
 		delimiter: React.PropTypes.string,         // delimiter to use to join multiple values
 		asyncOptions: React.PropTypes.func,        // function to call to get options
 		autoload: React.PropTypes.bool,            // whether to auto-load the default async options set
@@ -73,6 +74,7 @@ var Select = React.createClass({
 			ignoreCase: true,
 			inputProps: {},
 			allowCreate: false,
+			groupable: false,
 
 			onOptionLabelClick: undefined
 		};
@@ -335,7 +337,7 @@ var Select = React.createClass({
 		if (this.props.disabled || (event.type === 'mousedown' && event.button !== 0)) {
 			return;
 		}
-		// If not focused, handleMouseDown will handle it 
+		// If not focused, handleMouseDown will handle it
 		if (!this.state.isOpen) {
 			return;
 		}
@@ -660,30 +662,61 @@ var Select = React.createClass({
 			});
 		}
 
-		var ops = Object.keys(this.state.filteredOptions).map(function(key) {
-			var op = this.state.filteredOptions[key];
-			var isFocused = focusedValue === op.value;
+		var buildOps = function(options) {
+			return Object.keys(options).map(function(key) {
+				var op = options[key];
+				var isFocused = focusedValue === op.value;
 
-			var optionClass = classes({
-				'Select-option': true,
-				'is-focused': isFocused,
-				'is-disabled': op.disabled
+				var optionClass = classes({
+					'Select-option': true,
+					'is-focused': isFocused,
+					'is-disabled': op.disabled
+				});
+
+				var ref = isFocused ? 'focused' : null;
+
+				var mouseEnter = this.focusOption.bind(this, op);
+				var mouseLeave = this.unfocusOption.bind(this, op);
+				var mouseDown = this.selectValue.bind(this, op);
+
+				if (op.disabled) {
+					return <div ref={ref} key={'option-' + op.value} className={optionClass}>{op.label}</div>;
+				} else {
+					return <div ref={ref} key={'option-' + op.value} className={optionClass} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} onMouseDown={mouseDown} onClick={mouseDown}>{ op.create ? 'Add ' + op.label + ' ?' : op.label}</div>;
+					}
+			}, this);
+		}.bind(this);
+
+		var groupedOps = function() {
+			var optGroups = this.state.filteredOptions.map(function(op) {
+				return op.optGroup;
+			}).filter(function(groupName) {
+				return this.indexOf(groupName) !== -1;
 			});
 
-			var ref = isFocused ? 'focused' : null;
+			return optGroups.map(function(groupName) {
+				var options = this.state.filteredOptions.filter(function(op) {
+					return op.optGroup === groupName;
+				});
 
-			var mouseEnter = this.focusOption.bind(this, op);
-			var mouseLeave = this.unfocusOption.bind(this, op);
-			var mouseDown = this.selectValue.bind(this, op);
+				return (
+					<div key={groupName}>
+						<div>{groupName}</div>
+						{buildOps(this.state.filteredOptions)}
+					</div>
+				);
+			}, this);
+		}.bind(this);
 
-			if (op.disabled) {
-				return <div ref={ref} key={'option-' + op.value} className={optionClass}>{op.label}</div>;
+		var ops = function() {
+			if (this.props.groupable) {
+				return groupedOps();
 			} else {
-				return <div ref={ref} key={'option-' + op.value} className={optionClass} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} onMouseDown={mouseDown} onClick={mouseDown}>{ op.create ? 'Add ' + op.label + ' ?' : op.label}</div>;
+				return buildOps(this.state.filteredOptions);
 			}
-		}, this);
+		}.bind(this);
 
-		return ops.length ? ops : (
+		return ops().length ? ops() : (
 			<div className="Select-noresults">
 				{this.props.asyncOptions && !this.state.inputValue ? this.props.searchPromptText : this.props.noResultsText}
 			</div>
