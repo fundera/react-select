@@ -702,26 +702,29 @@ var Select = React.createClass({
 		}).bind(this);
 
 		var groupedOps = (function () {
-			var optGroups = this.state.filteredOptions.map(function (op) {
-				return op.optGroup;
-			}).filter(function (groupName) {
-				return this.indexOf(groupName) !== -1;
+
+			var opGroupNames = [];
+
+			this.state.filteredOptions.forEach(function (op) {
+				if (opGroupNames.indexOf(op.optGroup === -1)) {
+					opGroupNames.push(op.optGroup);
+				}
 			});
 
-			return optGroups.map(function (groupName) {
+			return opGroupNames.map(function (groupName, i) {
 				var options = this.state.filteredOptions.filter(function (op) {
 					return op.optGroup === groupName;
 				});
 
 				return React.createElement(
 					'div',
-					{ key: groupName },
+					{ key: groupName + '_' + i },
 					React.createElement(
 						'div',
-						null,
+						{ className: 'Select-option-group-label' },
 						groupName
 					),
-					buildOps(this.state.filteredOptions)
+					buildOps(options)
 				);
 			}, this);
 		}).bind(this);
